@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>homebox Ops Intel</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+    /* ── THEME TOKENS ──────────────────────────────────────────────── */
+    :root {
+      --accent: #F05A28;
+      --accent-hover: #d94d1f;
+      --accent-bg: rgba(240,90,40,0.08);
+      --accent-border: rgba(240,90,40,0.25);
+      --green: #16A34A;
+      --amber: #D97706;
+      --red: #DC2626;
+    }
+    body.light {
+      --bg: #F8FAFC;
+      --surface: #FFFFFF;
+      --text: #0D1117;
+      --text-secondary: #57606A;
+      --text-muted: #8B949E;
+      --border: #E2E8F0;
+      --border-focus: #F05A28;
+      --pill-red-bg: #FEE2E2; --pill-red-fg: #DC2626;
+      --pill-amber-bg: #FEF3C7; --pill-amber-fg: #D97706;
+      --pill-green-bg: #DCFCE7; --pill-green-fg: #16A34A;
+      --pill-orange-bg: rgba(240,90,40,0.1); --pill-orange-fg: #F05A28;
+      --pill-blue-bg: #DBEAFE; --pill-blue-fg: #2563EB;
+      --pill-gray-bg: #F1F5F9; --pill-gray-fg: #475569;
+      --pill-purple-bg: #EDE9FE; --pill-purple-fg: #7C3AED;
+      --table-head-bg: #F8FAFC;
+      --table-hover: #F8FAFC;
+      --error-bg: #FEF2F2; --error-border: #FECACA; --error-fg: #DC2626;
+      --success-bg: #F0FDF4; --success-border: #BBF7D0; --success-fg: #16A34A;
+      --bar-track: #E2E8F0;
+      --drop-hover-bg: rgba(240,90,40,0.04);
+    }
+    body.dark {
+      --bg: #0D1117;
+      --surface: #161B22;
+      --text: #E6EDF3;
+      --text-secondary: #8B949E;
+      --text-muted: #484F58;
+      --border: #30363D;
+      --border-focus: #F05A28;
+      --pill-red-bg: #3D1515; --pill-red-fg: #F87171;
+      --pill-amber-bg: #3D2A10; --pill-amber-fg: #FBBF24;
+      --pill-green-bg: #0F3D1A; --pill-green-fg: #4ADE80;
+      --pill-orange-bg: rgba(240,90,40,0.15); --pill-orange-fg: #F58A5E;
+      --pill-blue-bg: #0F1F3D; --pill-blue-fg: #60A5FA;
+      --pill-gray-bg: #21262D; --pill-gray-fg: #8B949E;
+      --pill-purple-bg: #1E1A3D; --pill-purple-fg: #A78BFA;
+      --table-head-bg: #0D1117;
+      --table-hover: #1C2128;
+      --error-bg: #3D1515; --error-border: #5C1D1D; --error-fg: #F87171;
+      --success-bg: #0F3D1A; --success-border: #166534; --success-fg: #4ADE80;
+      --bar-track: #21262D;
+      --drop-hover-bg: rgba(240,90,40,0.06);
+    }
+
+    body { background: var(--bg); color: var(--text); }
+
+    /* ── NAVBAR ─────────────────────────────────────────────────────── */
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 0.5px solid var(--border);
+    }
+    .navbar-left { display: flex; align-items: center; gap: 16px; }
+    .logo-mark {
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      color: #F05A28; font-size: 24px; font-weight: 700; line-height: 1;
+    }
+    .logo-text { display: flex; align-items: baseline; gap: 6px; }
+    .logo-brand { font-size: 15px; font-weight: 700; color: #F05A28; letter-spacing: -0.01em; }
+    .logo-sub { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+    .navbar-right { display: flex; align-items: center; gap: 12px; }
+    .theme-toggle {
+      background: none; border: 0.5px solid var(--border); border-radius: 6px;
+      padding: 6px 10px; font-size: 11px; font-weight: 500; cursor: pointer;
+      color: var(--text-secondary); font-family: inherit;
+    }
+    .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-run {
+      background: #F05A28; color: #fff; border: none; border-radius: 6px;
+      padding: 8px 20px; font-size: 12px; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: background 0.15s;
+    }
+    .btn-run:hover { background: #d94d1f; }
+    .btn-run:disabled { opacity: 0.5; cursor: default; }
+
+    /* ── TABS ───────────────────────────────────────────────────────── */
+    .tab-bar {
+      display: flex; gap: 0;
+      background: var(--surface);
+      border-bottom: 0.5px solid var(--border);
+      padding: 0 28px;
+    }
+    .tab-btn {
+      padding: 12px 20px; font-size: 12px; font-weight: 500; cursor: pointer;
+      border: none; background: none; color: var(--text-secondary);
+      border-bottom: 2px solid transparent; font-family: inherit;
+      transition: color 0.15s, border-color 0.15s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: #F05A28; border-bottom-color: #F05A28; font-weight: 600; }
+    .tab-badge {
+      font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 20px;
+      background: var(--pill-red-bg); color: var(--pill-red-fg); display: none;
+    }
+
+    /* ── METRICS ────────────────────────────────────────────────────── */
+    .metrics-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+      padding: 20px 28px 0; display: none;
+    }
+    .metrics-row.visible { display: grid; }
+    .metric-card {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: 8px; padding: 16px;
+    }
+    .metric-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+    .metric-value { font-size: 28px; font-weight: 700; line-height: 1; }
+    .metric-value.red { color: var(--red); }
+    .metric-value.amber { color: var(--amber); }
+    .metric-value.green { color: var(--green); }
+    .metric-value.orange { color: #F05A28; }
+
+    /* ── CONTENT ────────────────────────────────────────────────────── */
+    .main { padding: 20px 28px 40px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── PILLS ──────────────────────────────────────────────────────── */
+    .pill {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: 20px;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap;
+    }
+    .pill-red { background: var(--pill-red-bg); color: var(--pill-red-fg); }
+    .pill-amber { background: var(--pill-amber-bg); color: var(--pill-amber-fg); }
+    .pill-green { background: var(--pill-green-bg); color: var(--pill-green-fg); }
+    .pill-orange { background: var(--pill-orange-bg); color: var(--pill-orange-fg); }
+    .pill-blue { background: var(--pill-blue-bg); color: var(--pill-blue-fg); }
+    .pill-gray { background: var(--pill-gray-bg); color: var(--pill-gray-fg); }
+    .pill-purple { background: var(--pill-purple-bg); color: var(--pill-purple-fg); }
+
+    /* ── DROP ZONES ────────────────────────────────────────────────── */
+    .drop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .drop-zone {
+      border: 1px dashed var(--border); border-radius: 8px;
+      padding: 24px; text-align: center; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .drop-zone:hover { border-color: #F05A28; background: var(--drop-hover-bg); }
+    .drop-zone.drop-active { border-color: #F05A28; border-style: solid; background: var(--drop-hover-bg); }
+    .drop-zone .icon-wrap {
+      width: 32px; height: 32px; border-radius: 6px; margin: 0 auto 10px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--accent-bg);
+    }
+    .drop-label { font-size: 12px; font-weight: 500; color: #F05A28; }
+    .drop-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    /* ── INPUTS ─────────────────────────────────────────────────────── */
+    .text-input {
+      width: 100%; border-radius: 6px; padding: 10px 14px;
+      font-size: 12px; font-family: inherit; outline: none;
+      border: 0.5px solid var(--border); background: var(--surface);
+      color: var(--text); transition: border-color 0.15s;
+    }
+    .text-input::placeholder { color: var(--text-muted); }
+    .text-input:focus { border-color: #F05A28; }
+
+    /* ── TABLES ─────────────────────────────────────────────────────── */
+    .table-wrap {
+      border: 0.5px solid var(--border); border-radius: 8px;
+      overflow: hidden; background: var(--surface);
+    }
+    .table-scroll { overflow-x: auto; }
+    .table-wrap table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .table-wrap thead th {
+      text-align: left; padding: 10px 14px;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--text-muted);
+      background: var(--table-head-bg); border-bottom: 0.5px solid var(--border);
+      white-space: nowrap;
+    }
+    .table-wrap tbody tr { border-bottom: 0.5px solid var(--border); }
+    .table-wrap tbody tr:last-child { border-bottom: none; }
+    .table-wrap tbody tr:hover { background: var(--table-hover); }
+    .table-wrap tbody td { padding: 10px 14px; white-space: nowrap; color: var(--text-secondary); }
+
+    /* ── BREAKDOWN CARDS ───────────────────────────────────────────── */
+    .breakdown-card {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: 8px; padding: 16px; margin-bottom: 16px;
+    }
+    .section-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+      color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase;
+    }
+    .bar-track { background: var(--bar-track); border-radius: 2px; height: 4px; }
+    .bar-fill { height: 4px; border-radius: 2px; transition: width 0.5s; }
+    .supplier-row { margin-bottom: 14px; }
+    .supplier-row:last-child { margin-bottom: 0; }
+    .supplier-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .supplier-name { font-size: 12px; font-weight: 600; color: var(--text); }
+    .supplier-count { font-size: 11px; font-weight: 700; }
+
+    .breakdown-row {
+      background: var(--bg); border: 0.5px solid var(--border);
+      border-radius: 6px; padding: 10px 14px; margin-bottom: 8px;
+    }
+    .breakdown-row:last-child { margin-bottom: 0; }
+
+    /* ── FILTER BUTTONS ────────────────────────────────────────────── */
+    .filter-btn {
+      padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 500;
+      cursor: pointer; border: 0.5px solid var(--border); background: transparent;
+      color: var(--text-secondary); font-family: inherit; transition: all 0.15s;
+    }
+    .filter-btn.active {
+      background: var(--accent-bg); border-color: var(--accent-border);
+      color: #F05A28; font-weight: 600;
+    }
+    .filter-btn.not-on-wip {
+      border-color: var(--pill-red-fg); color: var(--pill-red-fg);
+    }
+    .filter-btn.not-on-wip.active {
+      background: var(--pill-red-bg); border-color: var(--pill-red-fg);
+      color: var(--pill-red-fg);
+    }
+    .row-highlight { background: var(--pill-red-bg) !important; }
+
+    /* ── ERROR / SUCCESS ───────────────────────────────────────────── */
+    .error-box {
+      background: var(--error-bg); border: 0.5px solid var(--error-border);
+      color: var(--error-fg); border-radius: 6px; padding: 10px 14px;
+      font-size: 12px; margin-bottom: 16px; display: none;
+    }
+    .success-box {
+      background: var(--success-bg); border: 0.5px solid var(--success-border);
+      color: var(--success-fg); border-radius: 6px; padding: 10px 14px;
+      font-size: 12px; margin-bottom: 16px; display: none;
+    }
+
+    /* ── DOWNLOAD BUTTON ───────────────────────────────────────────── */
+    .btn-outline {
+      background: none; border: 0.5px solid var(--border); border-radius: 6px;
+      padding: 8px 16px; font-size: 12px; font-weight: 500; cursor: pointer;
+      color: var(--text-secondary); font-family: inherit;
+    }
+    .btn-outline:hover { border-color: #F05A28; color: #F05A28; }
+
+    /* ── MISC ──────────────────────────────────────────────────────── */
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .input-card {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: 8px; padding: 16px;
+    }
+    .last-run { font-size: 11px; color: var(--text-muted); }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  </style>
+</head>
+
+<body class="light">
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <div class="logo-mark">*</div>
+      <div class="logo-text">
+        <span class="logo-brand">homebox</span>
+        <span class="logo-sub">Ops Intel</span>
+      </div>
+    </div>
+    <div class="navbar-right">
+      <span id="last-run" class="last-run"></span>
+      <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">
+        <svg id="theme-icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;vertical-align:middle;margin-right:4px;">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg id="theme-icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;">
+          <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+        </svg>
+        <span id="theme-label">Dark mode</span>
+      </button>
+      <button class="btn-run" id="btn-run" onclick="runActive()">Run analysis</button>
+    </div>
+  </nav>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-btn-gas" onclick="switchTab('gas')">Gas checker</button>
+    <button class="tab-btn" id="tab-btn-sla" onclick="switchTab('sla')">
+      SLA monitor
+      <span class="tab-badge" id="badge-sla"></span>
+    </button>
+    <button class="tab-btn" id="tab-btn-wip" onclick="switchTab('wip')">
+      WIP cross-reference
+      <span class="tab-badge" id="badge-wip"></span>
+    </button>
+  </div>
+
+  <!-- GLOBAL METRICS -->
+  <div class="metrics-row" id="global-metrics">
+    <div class="metric-card">
+      <div class="metric-label">Orders processed</div>
+      <div class="metric-value" id="gm-orders">—</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">SLA breached</div>
+      <div class="metric-value red" id="gm-breached">—</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">At risk</div>
+      <div class="metric-value amber" id="gm-atrisk">—</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Active objections</div>
+      <div class="metric-value orange" id="gm-objections">—</div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- ═══ GAS TAB ═══ -->
+    <div id="tab-gas" class="tab-content active">
+      <div id="gas-error" class="error-box"></div>
+      <div id="gas-sheet-ok" class="success-box"></div>
+
+      <div class="drop-grid">
+        <div id="drop-hb-gas" class="drop-zone" onclick="document.getElementById('file-hb-gas').click()">
+          <div class="icon-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F05A28" stroke-width="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <div class="drop-label" id="lbl-hb-gas">Homebox meter export</div>
+          <div class="drop-sub">Drop CSV or click to browse</div>
+          <input type="file" id="file-hb-gas" accept=".csv" style="display:none;">
+        </div>
+        <div id="drop-ts-gas" class="drop-zone" onclick="document.getElementById('file-ts-gas').click()">
+          <div class="icon-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F05A28" stroke-width="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <div class="drop-label" id="lbl-ts-gas">TSEG supplier export</div>
+          <div class="drop-sub">Drop CSV or click to browse</div>
+          <input type="file" id="file-ts-gas" accept=".csv" style="display:none;">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-bottom:16px;">
+        <input type="text" id="gas-sheet-url" class="text-input" placeholder="Google Sheets URL (optional)" style="flex:1;">
+        <button onclick="downloadGas()" id="btn-gas-download" class="btn-outline" style="display:none;white-space:nowrap;">Download CSV</button>
+      </div>
+
+      <div id="gas-local-metrics" style="display:none;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+        <div class="metric-card">
+          <div class="metric-label">Total orders</div>
+          <div class="metric-value" id="glm-total"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Electricity only</div>
+          <div class="metric-value red" id="glm-elec"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Gas confirmed</div>
+          <div class="metric-value green" id="glm-gas"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Review manually</div>
+          <div class="metric-value amber" id="glm-mis"></div>
+        </div>
+      </div>
+
+      <div id="gas-table-wrap" style="display:none;"></div>
+    </div>
+
+    <!-- ═══ SLA TAB ═══ -->
+    <div id="tab-sla" class="tab-content">
+      <div id="sla-error" class="error-box"></div>
+
+      <div class="drop-grid" style="grid-template-columns:1fr 1fr;">
+        <div id="drop-hb-sla" class="drop-zone" onclick="document.getElementById('file-hb-sla').click()">
+          <div class="icon-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F05A28" stroke-width="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <div class="drop-label" id="lbl-hb-sla">Homebox Trevor export</div>
+          <div class="drop-sub">Needs bill_state_updated_at and bill_state columns</div>
+          <input type="file" id="file-hb-sla" accept=".csv" style="display:none;">
+        </div>
+        <div class="input-card" style="display:flex;align-items:center;">
+          <input type="text" id="sla-sheet-url" class="text-input" placeholder="Google Sheets URL (optional)">
+        </div>
+      </div>
+
+      <div id="sla-local-metrics" style="display:none;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+        <div class="metric-card">
+          <div class="metric-label">Awaiting feedback</div>
+          <div class="metric-value" id="slm-total"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">SLA breached</div>
+          <div class="metric-value red" id="slm-breach"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">At risk (6-7d)</div>
+          <div class="metric-value amber" id="slm-risk"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Within SLA</div>
+          <div class="metric-value green" id="slm-ok"></div>
+        </div>
+      </div>
+
+      <div id="sla-supplier-breakdown"></div>
+      <div id="sla-search-bar" style="display:none;margin-bottom:16px;">
+        <div style="position:relative;width:280px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="sla-search" class="text-input" placeholder="Search by order ID..." oninput="applySLAFilters()" style="padding-left:34px;">
+        </div>
+      </div>
+      <div id="sla-table-wrap" style="display:none;"></div>
+    </div>
+
+    <!-- ═══ WIP TAB ═══ -->
+    <div id="tab-wip" class="tab-content">
+      <div id="wip-error" class="error-box"></div>
+
+      <div class="drop-grid">
+        <div id="drop-hb-wip" class="drop-zone" onclick="document.getElementById('file-hb-wip').click()">
+          <div class="icon-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F05A28" stroke-width="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <div class="drop-label" id="lbl-hb-wip">Homebox Trevor export</div>
+          <div class="drop-sub">Drop CSV or click</div>
+          <input type="file" id="file-hb-wip" accept=".csv" style="display:none;">
+        </div>
+        <div class="input-card">
+          <input type="text" id="wip-url" class="text-input" placeholder="WIP Google Sheets URL" style="margin-bottom:8px;">
+          <input type="text" id="wip-sheet-url" class="text-input" placeholder="Output Sheets URL (optional)">
+        </div>
+      </div>
+
+      <div id="wip-local-metrics" style="display:none;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+        <div class="metric-card">
+          <div class="metric-label">Total orders</div>
+          <div class="metric-value" id="wlm-total"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Matched to WIP</div>
+          <div class="metric-value orange" id="wlm-match"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Objections</div>
+          <div class="metric-value red" id="wlm-obj"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">No WIP match</div>
+          <div class="metric-value" id="wlm-none" style="color:var(--text-muted);"></div>
+        </div>
+      </div>
+
+      <div id="wip-objection-breakdown"></div>
+      <div id="wip-supplier-heatmap"></div>
+      <div id="wip-search-bar" style="display:none;margin-bottom:16px;">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <div style="position:relative;flex:0 0 280px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="wip-search" class="text-input" placeholder="Search by order ID..." oninput="applyWIPFilters()" style="padding-left:34px;">
+          </div>
+          <div id="wip-filters" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+        </div>
+      </div>
+      <div id="wip-table-wrap" style="display:none;"></div>
+    </div>
+
+  </div>
+
+  <script>
+    let fileHbGas = null, fileTsGas = null, fileHbSla = null, fileHbWip = null
+    let wipAllRows = [], wipCols = [], wipActiveFilter = 'all', wipSearchQuery = ''
+    let wipSortCol = 'days_elapsed', wipSortAsc = false
+    let slaSortCol = 'days_elapsed', slaSortAsc = false, slaAllRows = [], slaCols = [], slaSearchQuery = ''
+    let activeTab = 'gas'
+    let isDark = localStorage.getItem('theme') === 'dark'
+
+    // Global metric state
+    let gasTotal = 0, slaBreached = 0, slaAtRisk = 0, wipObjections = 0
+
+    const TAB_PILLS = {
+      'Objections': 'pill-red',
+      'Missing Meter Information': 'pill-blue',
+      'Gas Deleted': 'pill-purple',
+      'Gas Deketed': 'pill-purple',
+      'Switch Issues': 'pill-amber',
+      'API Order Errors': 'pill-gray',
+      'ET requests': 'pill-purple',
+      'Missing Tenant Details': 'pill-amber',
+      'WIP Overview': 'pill-gray',
+    }
+
+    function tabPill(tab) { return TAB_PILLS[tab] || 'pill-gray' }
+    function tabDisplay(tab) { return tab === 'Gas Deketed' ? 'Gas Deleted' : tab }
+
+    // ── THEME ──────────────────────────────────────────────────────
+    function applyTheme() {
+      document.body.className = isDark ? 'dark' : 'light'
+      document.getElementById('theme-label').textContent = isDark ? 'Light mode' : 'Dark mode'
+      document.getElementById('theme-icon-sun').style.display = isDark ? 'inline' : 'none'
+      document.getElementById('theme-icon-moon').style.display = isDark ? 'none' : 'inline'
+      localStorage.setItem('theme', isDark ? 'dark' : 'light')
+    }
+    function toggleTheme() { isDark = !isDark; applyTheme() }
+    applyTheme()
+
+    // ── TABS ───────────────────────────────────────────────────────
+    function switchTab(tab) {
+      activeTab = tab;
+      ['gas', 'sla', 'wip'].forEach(t => {
+        document.getElementById('tab-' + t).classList.toggle('active', t === tab)
+        document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab)
+      })
+    }
+
+    function runActive() {
+      if (activeTab === 'gas') runGas()
+      else if (activeTab === 'sla') runSLA()
+      else runWIP()
+    }
+
+    // ── GLOBAL METRICS ─────────────────────────────────────────────
+    function updateGlobalMetrics() {
+      document.getElementById('global-metrics').classList.add('visible')
+      document.getElementById('gm-orders').textContent = gasTotal || '—'
+      document.getElementById('gm-breached').textContent = slaBreached || '—'
+      document.getElementById('gm-atrisk').textContent = slaAtRisk || '—'
+      document.getElementById('gm-objections').textContent = wipObjections || '—'
+    }
+
+    // ── DROP ZONES ─────────────────────────────────────────────────
+    function setupDrop(dropId, inputId, onFile) {
+      const zone = document.getElementById(dropId)
+      const input = document.getElementById(inputId)
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drop-active') })
+      zone.addEventListener('dragleave', () => zone.classList.remove('drop-active'))
+      zone.addEventListener('drop', e => {
+        e.preventDefault(); zone.classList.remove('drop-active')
+        if (e.dataTransfer.files[0]) onFile(e.dataTransfer.files[0])
+      })
+      input.addEventListener('change', () => { if (input.files[0]) onFile(input.files[0]) })
+    }
+
+    function setFile(file, lblId, zoneId) {
+      document.getElementById(lblId).textContent = file.name
+      const zone = document.getElementById(zoneId)
+      zone.style.borderColor = '#F05A28'
+      zone.style.borderStyle = 'solid'
+    }
+
+    setupDrop('drop-hb-gas', 'file-hb-gas', f => { fileHbGas = f; setFile(f, 'lbl-hb-gas', 'drop-hb-gas') })
+    setupDrop('drop-ts-gas', 'file-ts-gas', f => { fileTsGas = f; setFile(f, 'lbl-ts-gas', 'drop-ts-gas') })
+    setupDrop('drop-hb-sla', 'file-hb-sla', f => { fileHbSla = f; setFile(f, 'lbl-hb-sla', 'drop-hb-sla') })
+    setupDrop('drop-hb-wip', 'file-hb-wip', f => { fileHbWip = f; setFile(f, 'lbl-hb-wip', 'drop-hb-wip') })
+
+    // ── HELPERS ────────────────────────────────────────────────────
+    function setBtn(loading) {
+      const b = document.getElementById('btn-run')
+      b.disabled = loading; b.textContent = loading ? 'Running...' : 'Run analysis'
+    }
+    function showError(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.style.display = 'block' }
+    function hideError(id) { document.getElementById(id).style.display = 'none' }
+    function updateLastRun() {
+      const now = new Date()
+      document.getElementById('last-run').textContent = 'Last run: ' + now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0')
+    }
+
+    // ── GAS CHECKER ───────────────────────────────────────────────
+    async function runGas() {
+      if (!fileHbGas || !fileTsGas) { showError('gas-error', 'Upload both files first.'); return }
+      hideError('gas-error'); setBtn(true)
+      const fd = new FormData()
+      fd.append('homebox', fileHbGas); fd.append('tseg', fileTsGas)
+      fd.append('sheet_url', document.getElementById('gas-sheet-url').value)
+      try {
+        const res = await fetch('/run-gas', { method: 'POST', body: fd })
+        if (!res.ok) {
+          const err = await res.json().catch(() => null)
+          showError('gas-error', (err && (typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail))) || 'Server error (' + res.status + ')'); return
+        }
+        const data = await res.json()
+        renderGas(data); updateLastRun()
+      } catch (e) { showError('gas-error', e.message === 'Failed to fetch' ? 'Could not connect. Is app.py running?' : e.message) }
+      finally { setBtn(false) }
+    }
+
+    function renderGas(data) {
+      gasTotal = data.summary.total
+      updateGlobalMetrics()
+
+      document.getElementById('glm-total').textContent = data.summary.total
+      document.getElementById('glm-elec').textContent = data.summary.elec_only
+      document.getElementById('glm-gas').textContent = data.summary.gas_ok
+      document.getElementById('glm-mis').textContent = data.summary.mismatch
+      document.getElementById('gas-local-metrics').style.display = 'grid'
+      document.getElementById('btn-gas-download').style.display = 'inline-block'
+
+      if (data.sheet_tab) {
+        const el = document.getElementById('gas-sheet-ok')
+        el.textContent = 'Pushed to Google Sheets \u2014 tab: "' + data.sheet_tab + '"'
+        el.style.display = 'block'
+      }
+
+      const FP = {
+        'electricity only - action required': '<span class="pill pill-orange">Elec only</span>',
+        'gas confirmed - ok': '<span class="pill pill-green">Gas ok</span>',
+        'mprn mismatch - review manually': '<span class="pill pill-amber">Review</span>',
+      }
+      const wrap = document.getElementById('gas-table-wrap')
+      wrap.innerHTML = buildTable(data.columns, data.rows, (row, col) => {
+        if (col === 'flag') return FP[row[col]] || row[col]
+        return row[col] ?? ''
+      })
+      wrap.style.display = 'block'; wrap.classList.add('fade-in')
+    }
+
+    async function downloadGas() {
+      if (!fileHbGas || !fileTsGas) return
+      const fd = new FormData()
+      fd.append('homebox', fileHbGas); fd.append('tseg', fileTsGas)
+      const res = await fetch('/download-gas', { method: 'POST', body: fd })
+      const blob = await res.blob()
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob); a.download = 'gas_flagged_' + new Date().toISOString().slice(0, 10) + '.csv'; a.click()
+    }
+
+    // ── SLA MONITOR ───────────────────────────────────────────────
+    async function runSLA() {
+      if (!fileHbSla) { showError('sla-error', 'Upload the Homebox Trevor export first.'); return }
+      hideError('sla-error'); setBtn(true)
+      const fd = new FormData()
+      fd.append('homebox', fileHbSla)
+      fd.append('sheet_url', document.getElementById('sla-sheet-url').value)
+      try {
+        const res = await fetch('/run-sla', { method: 'POST', body: fd })
+        if (!res.ok) {
+          const err = await res.json().catch(() => null)
+          showError('sla-error', (err && (typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail))) || 'Server error (' + res.status + ')'); return
+        }
+        const data = await res.json()
+        renderSLA(data); updateLastRun()
+      } catch (e) { showError('sla-error', 'Could not connect.') }
+      finally { setBtn(false) }
+    }
+
+    function renderSLA(data) {
+      slaBreached = data.summary.breached
+      slaAtRisk = data.summary.at_risk
+      updateGlobalMetrics()
+
+      document.getElementById('slm-total').textContent = data.summary.total_awaiting
+      document.getElementById('slm-breach').textContent = data.summary.breached
+      document.getElementById('slm-risk').textContent = data.summary.at_risk
+      document.getElementById('slm-ok').textContent = data.summary.ok
+      document.getElementById('sla-local-metrics').style.display = 'grid'
+
+      const badge = document.getElementById('badge-sla')
+      if (data.summary.breached > 0) { badge.textContent = data.summary.breached; badge.style.display = 'inline-block' }
+
+      if (data.supplier_breakdown && data.supplier_breakdown.length) {
+        const max = data.supplier_breakdown[0].total
+        let html = '<div class="breakdown-card"><div class="section-label">Supplier breakdown \u2014 awaiting feedback</div>'
+        data.supplier_breakdown.forEach(s => {
+          const pct = Math.round((s.total / max) * 100)
+          const bc = s.breached > 0 ? 'var(--red)' : s.at_risk > 0 ? 'var(--amber)' : 'var(--green)'
+          html += '<div class="supplier-row">'
+          html += '<div class="supplier-header">'
+          html += '<span class="supplier-name">' + (s.supplier || 'Unknown') + '</span>'
+          html += '<div style="display:flex;gap:6px;align-items:center;">'
+          if (s.breached) html += '<span class="pill pill-red">' + s.breached + ' breached</span>'
+          if (s.at_risk) html += '<span class="pill pill-amber">' + s.at_risk + ' at risk</span>'
+          if (s.ok) html += '<span class="pill pill-green">' + s.ok + ' ok</span>'
+          html += '</div></div>'
+          html += '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + bc + ';"></div></div>'
+          html += '</div>'
+        })
+        html += '</div>'
+        document.getElementById('sla-supplier-breakdown').innerHTML = html
+      }
+
+      slaAllRows = data.rows; slaCols = data.columns
+      slaSortCol = 'days_elapsed'; slaSortAsc = false; slaSearchQuery = ''
+      document.getElementById('sla-search').value = ''
+      document.getElementById('sla-search-bar').style.display = 'block'
+      applySLAFilters()
+    }
+
+    function sortSLA(col) {
+      if (slaSortCol === col) slaSortAsc = !slaSortAsc
+      else { slaSortCol = col; slaSortAsc = col === 'days_elapsed' ? false : true }
+      applySLAFilters()
+    }
+
+    function applySLAFilters() {
+      slaSearchQuery = (document.getElementById('sla-search').value || '').trim().toLowerCase()
+      let rows = slaAllRows
+      if (slaSearchQuery) {
+        rows = rows.filter(r => Object.values(r).some(v => String(v).toLowerCase().includes(slaSearchQuery)))
+      }
+      rows = sortRows(rows, slaSortCol, slaSortAsc)
+      renderSLATable(rows)
+    }
+
+    function renderSLATable(rows) {
+      const wrap = document.getElementById('sla-table-wrap')
+      wrap.innerHTML = buildSortableTable(slaCols, rows, 'sortSLA', slaSortCol, slaSortAsc, (row, col) => {
+        if (col === 'rag') {
+          const cls = { breached: 'pill-red', at_risk: 'pill-amber', ok: 'pill-green' }[row[col]] || ''
+          const label = { breached: 'Breached', at_risk: 'At risk', ok: 'Within SLA' }[row[col]] || row[col]
+          return '<span class="pill ' + cls + '">' + label + '</span>'
+        }
+        if (col === 'days_elapsed') {
+          const c = row['rag'] === 'breached' ? 'var(--red)' : row['rag'] === 'at_risk' ? 'var(--amber)' : 'var(--green)'
+          return '<span style="font-size:18px;font-weight:700;color:' + c + ';">' + row[col] + '</span><span style="font-size:11px;color:var(--text-muted);margin-left:2px;">d</span>'
+        }
+        return row[col] ?? ''
+      })
+      wrap.style.display = 'block'; wrap.classList.add('fade-in')
+    }
+
+    // ── WIP CROSS-REFERENCE ───────────────────────────────────────
+    async function runWIP() {
+      const wipUrl = document.getElementById('wip-url').value.trim()
+      if (!fileHbWip) { showError('wip-error', 'Upload the Homebox Trevor export.'); return }
+      if (!wipUrl) { showError('wip-error', 'Paste the WIP Google Sheets URL.'); return }
+      hideError('wip-error'); setBtn(true)
+      const fd = new FormData()
+      fd.append('homebox', fileHbWip); fd.append('wip_url', wipUrl)
+      fd.append('sheet_url', document.getElementById('wip-sheet-url').value)
+      try {
+        const res = await fetch('/run-wip', { method: 'POST', body: fd })
+        if (!res.ok) {
+          const err = await res.json().catch(() => null)
+          showError('wip-error', (err && (typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail))) || 'Server error (' + res.status + ')'); return
+        }
+        const data = await res.json()
+        renderWIP(data); updateLastRun()
+      } catch (e) { showError('wip-error', 'Could not connect.') }
+      finally { setBtn(false) }
+    }
+
+    function renderWIP(data) {
+      wipObjections = data.summary.objections
+      updateGlobalMetrics()
+
+      document.getElementById('wlm-total').textContent = data.summary.total
+      document.getElementById('wlm-match').textContent = data.summary.matched_to_wip
+      document.getElementById('wlm-obj').textContent = data.summary.objections
+      document.getElementById('wlm-none').textContent = data.summary.unmatched
+      document.getElementById('wip-local-metrics').style.display = 'grid'
+
+      const badge = document.getElementById('badge-wip')
+      if (data.summary.matched_to_wip > 0) { badge.textContent = data.summary.matched_to_wip; badge.style.display = 'inline-block' }
+
+      // Objection bar chart — Homebox orange bars
+      if (data.objection_by_supplier && data.objection_by_supplier.length) {
+        const max = data.objection_by_supplier[0].count
+        let html = '<div class="breakdown-card"><div class="section-label">Objections by supplier</div>'
+        data.objection_by_supplier.forEach(s => {
+          const pct = Math.round((s.count / max) * 100)
+          html += '<div class="supplier-row">'
+          html += '<div class="supplier-header">'
+          html += '<span class="supplier-name">' + (s.supplier || 'Unknown') + '</span>'
+          html += '<span class="supplier-count" style="color:#F05A28;">' + s.count + ' objection' + (s.count > 1 ? 's' : '') + '</span>'
+          html += '</div>'
+          html += '<div class="bar-track" style="height:5px;margin-bottom:6px;"><div class="bar-fill" style="width:' + pct + '%;height:5px;background:#F05A28;"></div></div>'
+          html += '<div style="font-size:11px;color:var(--text-muted);">Orders: ' + s.orders.slice(0, 5).join(', ') + (s.orders.length > 5 ? ' +more' : '') + '</div>'
+          html += '</div>'
+        })
+        html += '</div>'
+        document.getElementById('wip-objection-breakdown').innerHTML = html
+      }
+
+      // Supplier WIP heat map
+      if (data.supplier_wip_breakdown && data.supplier_wip_breakdown.length) {
+        let html = '<div class="breakdown-card"><div class="section-label">Supplier WIP breakdown</div>'
+        data.supplier_wip_breakdown.forEach(s => {
+          html += '<div class="breakdown-row">'
+          html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+          html += '<span class="supplier-name">' + (s.supplier || 'Unknown') + '</span>'
+          html += '<span style="font-size:11px;color:var(--text-muted);">' + s.total + ' total</span>'
+          html += '</div><div style="display:flex;flex-wrap:wrap;gap:6px;">'
+          Object.entries(s.by_tab).forEach(function([tab, count]) {
+            html += '<span class="pill ' + tabPill(tab) + '">' + tabDisplay(tab) + ': ' + count + '</span>'
+          })
+          html += '</div></div>'
+        })
+        html += '</div>'
+        document.getElementById('wip-supplier-heatmap').innerHTML = html
+      }
+
+      // Filter buttons
+      wipAllRows = data.rows; wipCols = data.columns
+      wipActiveFilter = 'all'; wipSearchQuery = ''
+      wipSortCol = 'days_elapsed'; wipSortAsc = false
+      document.getElementById('wip-search').value = ''
+
+      const notOnWipCount = data.rows.filter(r => !r.wip_tab).length
+      const tabs = ['all'].concat(data.tabs || []).concat(['_not_on_wip'])
+      let filterHtml = ''
+      tabs.forEach(t => {
+        let count, label, extraClass = ''
+        if (t === 'all') { count = data.rows.length; label = 'All' }
+        else if (t === '_not_on_wip') { count = notOnWipCount; label = 'Not on WIP'; extraClass = ' not-on-wip' }
+        else { count = data.rows.filter(r => r.wip_tab === t).length; label = tabDisplay(t) }
+        filterHtml += '<button onclick="filterWIP(\'' + t + '\')" id="wf-' + t.replace(/\s/g, '_') + '" class="filter-btn' + extraClass + (wipActiveFilter === t ? ' active' : '') + '">'
+        filterHtml += label + ' (' + count + ')</button>'
+      })
+      document.getElementById('wip-filters').innerHTML = filterHtml
+      document.getElementById('wip-search-bar').style.display = 'block'
+      applyWIPFilters()
+    }
+
+    function filterWIP(tab) {
+      wipActiveFilter = tab
+      document.querySelectorAll('[id^="wf-"]').forEach(b => {
+        b.classList.toggle('active', b.id === 'wf-' + tab.replace(/\s/g, '_'))
+      })
+      applyWIPFilters()
+    }
+
+    function applyWIPFilters() {
+      wipSearchQuery = (document.getElementById('wip-search').value || '').trim().toLowerCase()
+      let rows = wipAllRows
+
+      // Tab filter
+      if (wipActiveFilter === '_not_on_wip') {
+        rows = rows.filter(r => !r.wip_tab)
+      } else if (wipActiveFilter !== 'all') {
+        rows = rows.filter(r => r.wip_tab === wipActiveFilter)
+      }
+
+      // Search across order_id, tseg_id, address columns
+      if (wipSearchQuery) {
+        rows = rows.filter(r => {
+          return Object.values(r).some(v => String(v).toLowerCase().includes(wipSearchQuery))
+        })
+      }
+
+      // Sort
+      rows = sortRows(rows, wipSortCol, wipSortAsc)
+
+      renderWIPTable(rows)
+    }
+
+    function formatDate(val) {
+      if (!val) return ''
+      const d = new Date(val)
+      if (isNaN(d.getTime())) {
+        // Try DD/MM/YYYY format
+        const parts = String(val).split(/[\/\-]/)
+        if (parts.length === 3) {
+          const d2 = new Date(parts[2], parts[1] - 1, parts[0])
+          if (!isNaN(d2.getTime())) return d2.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+        }
+        return val
+      }
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    }
+
+    function supplyStatusPill(val) {
+      if (!val) return ''
+      const lower = val.toLowerCase().trim()
+      if (lower === 'submitted') return '<span class="pill pill-green">Submitted</span>'
+      if (lower === 'missing meter information') return '<span class="pill pill-amber">Missing Meter Information</span>'
+      return '<span class="pill pill-gray">' + val + '</span>'
+    }
+
+    // ── SORT UTILITY ─────────────────────────────────────────────
+    function sortRows(rows, col, asc) {
+      if (!col) return rows
+      return [...rows].sort((a, b) => {
+        let va = a[col], vb = b[col]
+        // Numeric sort for days_elapsed
+        if (col === 'days_elapsed') { va = Number(va) || 0; vb = Number(vb) || 0 }
+        else { va = String(va || '').toLowerCase(); vb = String(vb || '').toLowerCase() }
+        if (va < vb) return asc ? -1 : 1
+        if (va > vb) return asc ? 1 : -1
+        return 0
+      })
+    }
+
+    function sortArrow(col, activeCol, asc) {
+      if (col !== activeCol) return ' <span style="opacity:0.3;font-size:9px;">\u2195</span>'
+      return asc ? ' <span style="font-size:9px;">\u2191</span>' : ' <span style="font-size:9px;">\u2193</span>'
+    }
+
+    // ── WIP TABLE ─────────────────────────────────────────────────
+    function sortWIP(col) {
+      if (wipSortCol === col) wipSortAsc = !wipSortAsc
+      else { wipSortCol = col; wipSortAsc = col === 'days_elapsed' ? false : true }
+      applyWIPFilters()
+    }
+
+    function renderWIPTable(rows) {
+      const wrap = document.getElementById('wip-table-wrap')
+      const hlFn = wipActiveFilter === 'all' ? (row => !row.wip_tab) : null
+      wrap.innerHTML = buildSortableTable(wipCols, rows, 'sortWIP', wipSortCol, wipSortAsc, (row, col) => {
+        if (col === 'rag') {
+          const cls = { breached: 'pill-red', at_risk: 'pill-amber', ok: 'pill-green' }[row[col]] || ''
+          const label = { breached: 'Breached', at_risk: 'At risk', ok: 'Within SLA' }[row[col]] || row[col] || ''
+          return '<span class="pill ' + cls + '">' + label + '</span>'
+        }
+        if (col === 'days_elapsed') {
+          const c = row['rag'] === 'breached' ? 'var(--red)' : row['rag'] === 'at_risk' ? 'var(--amber)' : 'var(--green)'
+          return '<span style="font-size:18px;font-weight:700;color:' + c + ';">' + row[col] + '</span><span style="font-size:11px;color:var(--text-muted);margin-left:2px;">d</span>'
+        }
+        if (col === 'wip_tab' && row[col]) return '<span class="pill ' + tabPill(row[col]) + '">' + tabDisplay(row[col]) + '</span>'
+        if (col === 'wip_supply_status') return supplyStatusPill(row[col])
+        if (col === 'wip_services_start') return formatDate(row[col])
+        return row[col] ?? ''
+      }, hlFn)
+      wrap.style.display = 'block'; wrap.classList.add('fade-in')
+    }
+
+    // ── TABLE BUILDER (SORTABLE) ──────────────────────────────────
+    function buildSortableTable(cols, rows, sortFn, sortCol, sortAsc, cellFn, highlightFn) {
+      let html = '<div class="table-wrap"><div class="table-scroll"><table><thead><tr>'
+      cols.forEach(c => {
+        if (sortFn) {
+          html += '<th style="cursor:pointer;user-select:none;" onclick="' + sortFn + '(\'' + c + '\')">'
+          html += c + sortArrow(c, sortCol, sortAsc) + '</th>'
+        } else {
+          html += '<th>' + c + '</th>'
+        }
+      })
+      html += '</tr></thead><tbody>'
+      if (rows.length === 0) {
+        html += '<tr><td colspan="' + cols.length + '" style="text-align:center;padding:24px;color:var(--text-muted);">No matching orders</td></tr>'
+      }
+      rows.forEach(row => {
+        const hl = highlightFn && highlightFn(row) ? ' class="row-highlight"' : ''
+        html += '<tr' + hl + '>'
+        cols.forEach(col => { html += '<td>' + cellFn(row, col) + '</td>' })
+        html += '</tr>'
+      })
+      html += '</tbody></table></div></div>'
+      return html
+    }
+
+    function buildTable(cols, rows, cellFn) {
+      return buildSortableTable(cols, rows, '', '', false, cellFn)
+    }
+
+    switchTab('gas')
+  </script>
+</body>
+
+</html>
